@@ -87,14 +87,8 @@ cron.schedule('0 0 * * *', async () => {
   timezone: "Africa/Abidjan"
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 FlashMeet Backend running on port ${PORT}`);
-  console.log(`📱 Webhook endpoint: http://localhost:${PORT}/webhook`);
-  console.log(`⏰ Service hours: 20:00 - 00:00 (UTC+0)`);
-  console.log(`✅ Cron jobs initialized:`);
-  console.log(`   - Expired matches check: Every minute`);
-  console.log(`   - Opening notification: Daily at 19:55`);
-  console.log(`   - Midnight reset: Daily at 00:00`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`FlashMeet backend running on port ${PORT}`);
 });
 
 process.on('SIGINT', () => {
