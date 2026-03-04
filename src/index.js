@@ -1,7 +1,9 @@
 import express from 'express';
 import cron from 'node-cron';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import webhookRouter from './routes/webhook.js';
+import waitlistRouter from './routes/waitlist.js';
 import { getExpiredMatches } from './services/matchingService.js';
 import { endChat, sendWhatsAppMessage } from './services/chatService.js';
 import { resetDailyMatches, setAllUsersOffline, getActiveUsers } from './services/userService.js';
@@ -11,10 +13,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use('/webhook', webhookRouter);
+app.use('/api/waitlist', waitlistRouter);
 
 app.get('/', (req, res) => {
   res.send('FlashMeet Backend is running! 🚀');
