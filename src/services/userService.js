@@ -133,18 +133,107 @@ export async function onboardingFlow(phone, message) {
       
       await supabase
         .from('users')
+        .update({ city: message.trim() })
+        .eq('phone', phone);
+      
+      console.log(`User ${phone} set city: ${message.trim()}`);
+      return "Super ! 🎯\n\nTu es plutôt : AVENTURIER, CALME ou SOCIABLE ?";
+    }
+
+    if (!user.personality_type) {
+      const validTypes = ['aventurier', 'calme', 'sociable'];
+      const input = message.toLowerCase().trim();
+      
+      if (!validTypes.includes(input)) {
+        return "Réponds AVENTURIER, CALME ou SOCIABLE s'il te plaît.";
+      }
+      
+      await supabase
+        .from('users')
+        .update({ personality_type: input })
+        .eq('phone', phone);
+      
+      console.log(`User ${phone} set personality_type: ${input}`);
+      return "Cool ! 🌙\n\nTa soirée idéale : CHILL, FESTIF ou ROMANTIQUE ?";
+    }
+
+    if (!user.evening_style) {
+      const validStyles = ['chill', 'festif', 'romantique'];
+      const input = message.toLowerCase().trim();
+      
+      if (!validStyles.includes(input)) {
+        return "Réponds CHILL, FESTIF ou ROMANTIQUE s'il te plaît.";
+      }
+      
+      await supabase
+        .from('users')
+        .update({ evening_style: input })
+        .eq('phone', phone);
+      
+      console.log(`User ${phone} set evening_style: ${input}`);
+      return "Parfait ! 💬\n\nTu cherches : SÉRIEUX, CASUAL ou AMITIÉ ?";
+    }
+
+    if (!user.relationship_type) {
+      const validTypes = ['sérieux', 'casual', 'amitié'];
+      const input = message.toLowerCase().trim();
+      
+      if (!validTypes.includes(input)) {
+        return "Réponds SÉRIEUX, CASUAL ou AMITIÉ s'il te plaît.";
+      }
+      
+      await supabase
+        .from('users')
+        .update({ relationship_type: input })
+        .eq('phone', phone);
+      
+      console.log(`User ${phone} set relationship_type: ${input}`);
+      return "Merci ! 🎂\n\nÂge minimum souhaité ? (Entre 18 et 99)";
+    }
+
+    if (!user.min_age_pref) {
+      const minAge = parseInt(message);
+      if (isNaN(minAge) || minAge < 18 || minAge > 99) {
+        return "Entre un âge valide entre 18 et 99 ans.";
+      }
+      
+      await supabase
+        .from('users')
+        .update({ min_age_pref: minAge })
+        .eq('phone', phone);
+      
+      console.log(`User ${phone} set min_age_pref: ${minAge}`);
+      return "Parfait ! 🎂\n\nÂge maximum souhaité ? (Entre 18 et 99)";
+    }
+
+    if (!user.max_age_pref) {
+      const maxAge = parseInt(message);
+      if (isNaN(maxAge) || maxAge < 18 || maxAge > 99) {
+        return "Entre un âge valide entre 18 et 99 ans.";
+      }
+      
+      if (user.min_age_pref && maxAge < user.min_age_pref) {
+        return `L'âge maximum doit être supérieur ou égal à ${user.min_age_pref} ans.`;
+      }
+      
+      await supabase
+        .from('users')
         .update({ 
-          city: message.trim(),
+          max_age_pref: maxAge,
           is_verified: true,
           status: 'available'
         })
         .eq('phone', phone);
       
-      console.log(`User ${phone} completed onboarding. City: ${message.trim()}`);
+      console.log(`User ${phone} completed onboarding. Max age: ${maxAge}`);
       return `🎉 Profil créé avec succès !\n\nTu peux maintenant trouver des matchs. Le service est ouvert de 20h à minuit.\n\nEnvoie START pour lancer ta première rencontre ! ✨`;
     }
 
-    return "Profil déjà complété ! Envoie START pour trouver un match.";
+    if (user.is_verified) {
+      return "Profil déjà complété ! Envoie START pour trouver un match.";
+    }
+    
+    return "Profil incomplet. Envoie 'START' pour recommencer l'inscription.";
   } catch (error) {
     console.error('Error in onboardingFlow:', error);
     return "Une erreur s'est produite. Réessaye plus tard.";

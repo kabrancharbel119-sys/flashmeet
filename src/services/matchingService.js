@@ -1,6 +1,65 @@
 import { supabase } from '../config/supabase.js';
 import { incrementMatchCount } from './userService.js';
 
+async function hasRecentMatch(user1Id, user2Id) {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data, error } = await supabase
+      .from('matches')
+      .select('id')
+      .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .limit(1);
+
+    if (error) throw error;
+    return data && data.length > 0;
+  } catch (error) {
+    console.error('Error in hasRecentMatch:', error);
+    return false;
+  }
+}
+
+function calculateScore(user, candidate) {
+  let score = 0;
+
+  if (user.personality_type && candidate.personality_type && user.personality_type === candidate.personality_type) {
+    score += 20;
+  }
+
+  if (user.evening_style && candidate.evening_style && user.evening_style === candidate.evening_style) {
+    score += 20;
+  }
+
+  if (user.communication_style && candidate.communication_style && user.communication_style === candidate.communication_style) {
+    score += 15;
+  }
+
+  if (user.relationship_type && candidate.relationship_type && user.relationship_type === candidate.relationship_type) {
+    score += 10;
+  }
+
+  if (candidate.last_active) {
+    const tenMinutesAgo = new Date();
+    tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+    const lastActive = new Date(candidate.last_active);
+    if (lastActive >= tenMinutesAgo) {
+      score += 10;
+    }
+  }
+
+  if (user.city && candidate.city && user.city.toLowerCase() === candidate.city.toLowerCase()) {
+    score += 15;
+  }
+
+  if (candidate.is_premium) {
+    score += 10;
+  }
+
+  return score;
+}
+
 export async function findMatch(userId) {
   try {
     const { data: user, error: userError } = await supabase
@@ -11,12 +70,19 @@ export async function findMatch(userId) {
 
     if (userError) throw userError;
 
+    const now = new Date();
+    const currentHour = now.getUTCHours();
+    if (currentHour < 20 && currentHour >= 0) {
+      console.log(`Service not available at this time (${currentHour}h UTC)`);
+      return null;
+    }
+
     if (!user.is_premium && user.matches_today >= 10) {
       console.log(`User ${userId} has reached daily match limit`);
       return null;
     }
 
-    const { data: blockedUsers, error: blockError } = await supabase
+    const { data: blockedUsers } = await supabase
       .from('blocks_reports')
       .select('reported_id')
       .eq('reporter_id', userId)
@@ -24,7 +90,7 @@ export async function findMatch(userId) {
 
     const blockedIds = blockedUsers ? blockedUsers.map(b => b.reported_id) : [];
 
-    const { data: blockedByUsers, error: blockedByError } = await supabase
+    const { data: blockedByUsers } = await supabase
       .from('blocks_reports')
       .select('reporter_id')
       .eq('reported_id', userId)
@@ -56,9 +122,42 @@ export async function findMatch(userId) {
       return null;
     }
 
-    const randomMatch = potentialMatches[Math.floor(Math.random() * potentialMatches.length)];
-    console.log(`Match found for user ${userId}: ${randomMatch.id}`);
-    return randomMatch;
+    const candidatesWithScore = [];
+
+    for (const candidate of potentialMatches) {
+      const hasRecent = await hasRecentMatch(userId, candidate.id);
+      if (hasRecent) {
+        continue;
+      }
+
+      if (user.min_age_pref && candidate.age < user.min_age_pref) {
+        continue;
+      }
+      if (user.max_age_pref && candidate.age > user.max_age_pref) {
+        continue;
+      }
+
+      const score = calculateScore(user, candidate);
+      candidatesWithScore.push({ candidate, score });
+    }
+
+    if (candidatesWithScore.length === 0) {
+      console.log(`No valid candidates after filtering for user ${userId}`);
+      return null;
+    }
+
+    candidatesWithScore.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      const aLastActive = new Date(a.candidate.last_active || 0);
+      const bLastActive = new Date(b.candidate.last_active || 0);
+      return bLastActive - aLastActive;
+    });
+
+    const bestMatch = candidatesWithScore[0].candidate;
+    console.log(`Match found for user ${userId}: ${bestMatch.id} with score ${candidatesWithScore[0].score}`);
+    return bestMatch;
   } catch (error) {
     console.error('Error in findMatch:', error);
     throw error;
