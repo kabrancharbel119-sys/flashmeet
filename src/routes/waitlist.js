@@ -7,7 +7,7 @@ const router = express.Router();
 function isWithinServiceHours() {
   const now = new Date();
   const utcHour = now.getUTCHours();
-  return utcHour >= 20 || utcHour < 0;
+  return utcHour >= 20 && utcHour < 24;
 }
 
 router.post('/', async (req, res) => {
