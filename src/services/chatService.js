@@ -1,29 +1,8 @@
 import { supabase } from '../config/supabase.js';
-import twilio from 'twilio';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+import { sendMetaWhatsAppMessage } from '../config/meta.js';
 
 export async function sendWhatsAppMessage(to, message) {
-  try {
-    const result = await twilioClient.messages.create({
-      from: twilioWhatsAppNumber,
-      to: to,
-      body: message,
-    });
-    console.log(`Message sent to ${to}: ${message.substring(0, 50)}...`);
-    return result;
-  } catch (error) {
-    console.error(`Error sending message to ${to}:`, error);
-    throw error;
-  }
+  return await sendMetaWhatsAppMessage(to, message);
 }
 
 export async function relayMessage(senderId, message) {

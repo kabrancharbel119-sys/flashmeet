@@ -1,5 +1,6 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
+import { metaConfig } from '../config/meta.js';
 import { 
   createOrGetUser, 
   getUserByPhone, 
@@ -30,19 +31,40 @@ function isServiceOpen() {
   return utcHours >= 20 || utcHours < 0;
 }
 
+router.get('/', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === metaConfig.verifyToken) {
+    console.log('Webhook verified successfully');
+    res.status(200).send(challenge);
+  } else {
+    console.log('Webhook verification failed');
+    res.sendStatus(403);
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
-    const { Body: message, From: from } = req.body;
-    
-    if (!message || !from) {
-      return res.status(400).send('Missing required fields');
+    const body = req.body;
+
+    if (!body.entry || !body.entry[0]?.changes || !body.entry[0].changes[0]?.value?.messages) {
+      return res.sendStatus(200);
     }
 
-    console.log(`Received message from ${from}: ${message}`);
+    const message = body.entry[0].changes[0].value.messages[0];
+    const from = message.from;
+    const messageText = message.text?.body;
+
+    if (!messageText || !from) {
+      return res.sendStatus(200);
+    }
+
+    console.log(`Received message from ${from}: ${messageText}`);
 
     const phone = from;
-    const messageText = message.trim();
-    const messageLower = messageText.toLowerCase();
+    const messageLower = messageText.trim().toLowerCase();
 
     let user = await createOrGetUser(phone);
 
@@ -182,7 +204,7 @@ router.post('/', async (req, res) => {
       const activeMatch = await getActiveMatch(user.id);
       
       if (activeMatch) {
-        await relayMessage(user.id, messageText);
+        await relayMessage(user.id, messageText.trim());
       } else {
         await sendWhatsAppMessage(phone, "Ta conversation est terminée. Envoie START pour un nouveau match !");
         await updateUserStatus(phone, 'available');
