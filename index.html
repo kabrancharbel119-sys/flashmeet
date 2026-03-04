@@ -713,6 +713,14 @@
             submitButton.textContent = 'Inscription en cours...';
 
             try {
+                const requestBody = {
+                    prenom: name,
+                    phone: phone,
+                    ville: city
+                };
+                
+                console.log('Envoi vers Supabase:', requestBody);
+                
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
                     method: 'POST',
                     headers: {
@@ -721,12 +729,7 @@
                         'Content-Type': 'application/json',
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        city: city,
-                        created_at: new Date().toISOString()
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (response.status === 201) {
