@@ -670,8 +670,8 @@
     </footer>
 
     <script>
-        // v2.0 - Backend API integration
-        const API_URL = 'http://localhost:3000';
+        const SUPABASE_URL = 'https://qwrizckpsfnihhhorvmw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3cml6Y2twc2ZuaWhoaG9ydm13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MzQzMzQsImV4cCI6MjA4ODIxMDMzNH0.1sL-8LbqnGcz9ksNm7-9tvZjGqn8feQADHkrS6pVoIQ';
 
         const form = document.getElementById('waitlistForm');
         const messageDiv = document.getElementById('message');
@@ -713,29 +713,33 @@
             submitButton.textContent = 'Inscription en cours...';
 
             try {
-                const response = await fetch(`${API_URL}/api/waitlist/join`, {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
                     },
                     body: JSON.stringify({
                         name: name,
                         phone: phone,
-                        city: city
+                        city: city,
+                        created_at: new Date().toISOString()
                     })
                 });
 
-                const data = await response.json();
-
-                if (data.success) {
-                    showMessage(data.message, 'success');
+                if (response.status === 201) {
+                    showMessage('🎉 Tu es sur la liste ! On te contacte à l\'ouverture.', 'success');
                     form.reset();
+                } else if (response.status === 409) {
+                    showMessage('Ce numéro est déjà inscrit !', 'error');
                 } else {
-                    showMessage(data.message || 'Une erreur est survenue.', 'error');
+                    showMessage('Une erreur est survenue, réessaie.', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('Une erreur est survenue. Vérifie ta connexion.', 'error');
+                showMessage('Une erreur est survenue, réessaie.', 'error');
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Je veux accéder en avant-première';
