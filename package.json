@@ -1,0 +1,21 @@
+{
+  "name": "flashmeet-backend",
+  "version": "1.0.0",
+  "description": "Backend for FlashMeet WhatsApp speed dating app",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": ["whatsapp", "speed-dating", "twilio"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.39.0",
+    "twilio": "^4.19.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.3.1"
+  }
+}
