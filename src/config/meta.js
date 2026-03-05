@@ -18,15 +18,27 @@ export const metaConfig = {
   apiUrl: `https://graph.facebook.com/v22.0/${META_PHONE_NUMBER_ID}/messages`,
 };
 
+function normalizePhone(phone) {
+  let p = phone.replace('+', '');
+  
+  if (p.startsWith('225') && p.length === 11) {
+    p = '225' + '0' + p.slice(3);
+  }
+  
+  return p;
+}
+
 export async function sendMetaWhatsAppMessage(to, message) {
   try {
-    console.log(`[META API] Sending to phone number:`, to);
+    console.log(`[META API] Original phone:`, to);
+    const normalizedPhone = normalizePhone(to);
+    console.log(`[META API] Normalized phone:`, normalizedPhone);
     
     const response = await axios.post(
       metaConfig.apiUrl,
       {
         messaging_product: 'whatsapp',
-        to: to,
+        to: normalizedPhone,
         type: 'text',
         text: { body: message },
       },
@@ -38,7 +50,7 @@ export async function sendMetaWhatsAppMessage(to, message) {
       }
     );
 
-    console.log(`[META API] Message sent successfully to ${to}`);
+    console.log(`[META API] Message sent successfully to ${normalizedPhone}`);
     return response.data;
   } catch (error) {
     console.error(`[META API] Error sending message to ${to}:`, error.response?.data || error.message);

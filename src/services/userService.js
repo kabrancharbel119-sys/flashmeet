@@ -1,13 +1,25 @@
 import { supabase } from '../config/supabase.js';
 
+function normalizePhone(phone) {
+  let p = phone.replace('+', '');
+  
+  if (p.startsWith('225') && p.length === 11) {
+    p = '225' + '0' + p.slice(3);
+  }
+  
+  return p;
+}
+
 export async function createOrGetUser(phone) {
   try {
     console.log('createOrGetUser - phone received:', phone);
+    const normalizedPhone = normalizePhone(phone);
+    console.log('createOrGetUser - normalized phone:', normalizedPhone);
     
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
-      .eq('phone', phone)
+      .eq('phone', normalizedPhone)
       .single();
 
     if (existingUser) {
@@ -19,7 +31,7 @@ export async function createOrGetUser(phone) {
       .from('users')
       .insert([
         {
-          phone,
+          phone: normalizedPhone,
           status: 'offline',
           is_verified: false,
           is_premium: false,
@@ -32,7 +44,7 @@ export async function createOrGetUser(phone) {
 
     if (createError) throw createError;
 
-    console.log(`New user created: ${phone}`);
+    console.log(`New user created: ${normalizedPhone}`);
     return newUser;
   } catch (error) {
     console.error('Error in createOrGetUser:', error);
@@ -43,11 +55,13 @@ export async function createOrGetUser(phone) {
 export async function getUserByPhone(phone) {
   try {
     console.log('getUserByPhone - phone received:', phone);
+    const normalizedPhone = normalizePhone(phone);
+    console.log('getUserByPhone - normalized phone:', normalizedPhone);
     
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('phone', phone)
+      .eq('phone', normalizedPhone)
       .single();
 
     if (error) throw error;
