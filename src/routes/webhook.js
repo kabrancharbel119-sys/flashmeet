@@ -57,9 +57,7 @@ router.post('/', async (req, res) => {
     const from = message.from;
     const messageText = message.text?.body;
 
-    console.log(`[META WEBHOOK] Raw 'from' received from Meta:`, from);
-    console.log(`[META WEBHOOK] typeof from:`, typeof from);
-    console.log(`[META WEBHOOK] Message text:`, messageText);
+    console.log('From Meta:', from);
 
     if (!messageText || !from) {
       return res.sendStatus(200);

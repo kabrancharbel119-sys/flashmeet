@@ -2,6 +2,8 @@ import { supabase } from '../config/supabase.js';
 
 export async function createOrGetUser(phone) {
   try {
+    console.log('createOrGetUser - phone received:', phone);
+    
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
@@ -40,6 +42,8 @@ export async function createOrGetUser(phone) {
 
 export async function getUserByPhone(phone) {
   try {
+    console.log('getUserByPhone - phone received:', phone);
+    
     const { data, error } = await supabase
       .from('users')
       .select('*')
