@@ -20,11 +20,13 @@ export const metaConfig = {
 
 export async function sendMetaWhatsAppMessage(to, message) {
   try {
+    console.log(`[META API] Sending to phone number:`, to);
+    
     const response = await axios.post(
       metaConfig.apiUrl,
       {
         messaging_product: 'whatsapp',
-        to: to.replace('whatsapp:', ''),
+        to: to,
         type: 'text',
         text: { body: message },
       },
@@ -36,10 +38,10 @@ export async function sendMetaWhatsAppMessage(to, message) {
       }
     );
 
-    console.log(`Message sent to ${to}: ${message.substring(0, 50)}...`);
+    console.log(`[META API] Message sent successfully to ${to}`);
     return response.data;
   } catch (error) {
-    console.error(`Error sending message to ${to}:`, error.response?.data || error.message);
+    console.error(`[META API] Error sending message to ${to}:`, error.response?.data || error.message);
     throw error;
   }
 }

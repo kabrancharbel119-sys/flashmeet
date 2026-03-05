@@ -57,14 +57,15 @@ router.post('/', async (req, res) => {
     const from = message.from;
     const messageText = message.text?.body;
 
+    console.log(`[META WEBHOOK] Raw 'from' received from Meta:`, from);
+    console.log(`[META WEBHOOK] typeof from:`, typeof from);
+    console.log(`[META WEBHOOK] Message text:`, messageText);
+
     if (!messageText || !from) {
       return res.sendStatus(200);
     }
 
-    console.log(`[META WEBHOOK] Raw 'from' received:`, from);
-    console.log(`[META WEBHOOK] Message: ${messageText}`);
-
-    const phone = from.startsWith('+') ? from : `+${from}`;
+    const phone = from;
     const messageLower = messageText.trim().toLowerCase();
 
     let user = await createOrGetUser(phone);
