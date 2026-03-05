@@ -3,12 +3,12 @@ import { supabase } from '../config/supabase.js';
 function normalizePhone(phone) {
   let p = phone.replace('+', '').trim();
   
-  // Meta envoie : 22589747248 (11 chiffres - supprime le 0 du 07)
-  // Format correct : 2250789747248 (13 chiffres)
-  // On insère le 0 après 225
-  // Ex: 225|89747248 → 225|0|789747248
+  // Pattern ivoirien : +225 + opérateur(01-09) + numéro(8 chiffres)
+  // Exemple complet : +225 07 89747248
+  // Meta supprime le 0 de l'opérateur et envoie : 225 7 89747248 = 22589747248 (11 chiffres)
+  // Il faut réinsérer le 0 après 225
   if (p.startsWith('225') && p.length === 11) {
-    // Garder '225' + ajouter '0' + garder '789747248' (8 derniers chiffres)
+    // 22589747248 → 225 + 0 + 789747248 = 2250789747248
     p = p.substring(0, 3) + '0' + p.substring(3);
   }
   

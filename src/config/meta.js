@@ -21,12 +21,12 @@ export const metaConfig = {
 function normalizePhone(phone) {
   let p = phone.replace('+', '').trim();
   
-  // Meta envoie : 22589747248 (11 chiffres)
-  // Décomposition : 225 + 89747248
-  // Format correct : 225 + 0 + 7 + 89747248 = 2250789747248 (13 chiffres)
-  // Le 7 du 07 est déjà dans 89747248, il faut juste ajouter le 0
+  // Pattern ivoirien : +225 + opérateur(01-09) + numéro(8 chiffres)
+  // Exemple complet : +225 07 89747248
+  // Meta supprime le 0 de l'opérateur et envoie : 225 7 89747248 = 22589747248 (11 chiffres)
+  // Il faut réinsérer le 0 après 225
   if (p.startsWith('225') && p.length === 11) {
-    // 22589747248 → 225 + 0 + 789747248
+    // 22589747248 → 225 + 0 + 789747248 = 2250789747248
     p = p.substring(0, 3) + '0' + p.substring(3);
   }
   
