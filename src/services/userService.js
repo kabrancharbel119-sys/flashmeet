@@ -1,13 +1,17 @@
 import { supabase } from '../config/supabase.js';
 
 function normalizePhone(phone) {
-  let p = phone.replace('+', '');
+  let p = phone.replace('+', '').trim();
   
+  // Meta envoie : 225 + 7 + 89747248 = 11 chiffres (supprime le 0 du 07)
+  // Format correct : 225 + 07 + 89747248 = 13 chiffres
+  // On insère juste le 0 manquant après 225
+  // Ex: 22589747248 → +2250789747248
   if (p.startsWith('225') && p.length === 11) {
-    p = '225' + '0' + p.slice(3);
+    p = p.slice(0, 3) + '0' + p.slice(3);
   }
   
-  return p;
+  return '+' + p;
 }
 
 export async function createOrGetUser(phone) {
